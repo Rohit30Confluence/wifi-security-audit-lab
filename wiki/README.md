@@ -10,14 +10,21 @@
 - LAN Inventory
 - Service Assessment
 - Evidence
+- Evidence & Wireless Sessions
+- Credential & Wireless Engine
+- Wireless Red-Team Operations
 - Testing
 - Android / Termux Limitations
 - Roadmap
 
-## LAB-001
+## Current state
 
-LAB-001 documents the transition from demonstration fixtures to real Android/Termux Wi-Fi telemetry and authorized LAN inventory.
+The project has evolved from demonstration reporting into an authorization-aware assessment framework with guarded credential auditing, wireless capability discovery, wireless operation planning, collision-safe evidence, and CI verification.
 
-The documentation separates wireless discovery, authorized association, LAN host discovery, service inventory, evidence generation, and assessment reporting.
+The completed feature branch currently reports **123 passing tests**.
+
+## Safety boundary
+
+Discovery does not authorize active access. Credential engines validate scope before execution. Wireless operation types are currently planning/evidence workflows only; no unrestricted packet-transmission backend is included.
 
 No synthetic result is presented as live evidence.
