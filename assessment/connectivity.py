@@ -45,7 +45,12 @@ def get_interface_info(interface="wlan0"):
     result = run_command(
         ["ip", "addr", "show", "dev", interface]
     )
-    result["available"] = result["returncode"] == 0
+    if not isinstance(result, dict):
+        return {
+            "available": False,
+            "reason": "interface probe returned no result",
+        }
+    result["available"] = result.get("returncode") == 0
     return result
 
 
@@ -57,7 +62,12 @@ def get_routes():
         }
 
     result = run_command(["ip", "route"])
-    result["available"] = result["returncode"] == 0
+    if not isinstance(result, dict):
+        return {
+            "available": False,
+            "reason": "route probe returned no result",
+        }
+    result["available"] = result.get("returncode") == 0
     return result
 
 
@@ -72,15 +82,21 @@ def get_termux_connection_info():
 
     result = run_command([command])
 
-    if result["returncode"] != 0:
+    if not isinstance(result, dict):
         return {
             "available": False,
-            "reason": result["stderr"] or "Termux Wi-Fi API failed",
+            "reason": "Termux Wi-Fi API returned no result",
+        }
+
+    if result.get("returncode") != 0:
+        return {
+            "available": False,
+            "reason": result.get("stderr") or "Termux Wi-Fi API failed",
             "raw": result,
         }
 
     try:
-        data = json.loads(result["stdout"])
+        data = json.loads(result.get("stdout", ""))
     except json.JSONDecodeError:
         return {
             "available": False,
