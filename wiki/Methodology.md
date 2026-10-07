@@ -2,52 +2,46 @@
 
 ## Phase 1 — Wireless discovery
 
-Use Android/Termux Wi-Fi telemetry to collect observable access-point metadata:
+Collect observable AP metadata:
 
 - SSID
 - BSSID
 - RSSI
-- Frequency
-- Channel bandwidth
-- Security capabilities
+- frequency/band
+- channel information
+- security capabilities
 - WPS advertisement when exposed
 
-This phase identifies radio-visible networks only.
+Observation does not authorize active testing.
 
-## Phase 2 — Authorized association
+## Phase 2 — Authorization and session
 
-The device must be connected to an explicitly authorized network before IP-layer inventory is attempted.
+Before active assessment, validate the explicit BSSID and authorization reference against `authorized_networks.csv`.
 
-Connection telemetry is collected through Termux:API.
+Missing, malformed, empty, placeholder, or mismatched authorization fails closed.
 
-## Phase 3 — LAN discovery
+## Phase 3 — Connectivity and LAN assessment
 
-The authorized IPv4 network is derived from the connected device address where available.
+For an authorized connected network, collect connection state and derive the available IPv4 scope where platform permissions allow it. Run bounded host and TCP service discovery only inside that scope.
 
-Nmap host discovery is then used to identify reachable hosts inside the authorized scope.
+## Phase 4 — Credential assessment
 
-## Phase 4 — Service inventory
+Credential auditing can use guarded Hydra online checks or John offline hash auditing. Authorization is checked before execution, concurrency/timeouts are bounded, and dry-run is the default.
 
-Reachable hosts may be assessed for selected TCP services.
+## Phase 5 — Wireless capability and operation planning
 
-The project records:
+Detect wireless interfaces and supported modes. A requested wireless operation must provide explicit SSID, BSSID, interface, authorization reference, and capability evidence.
 
-- Host address
-- Port
-- State
-- Service
-- Product/version when identification succeeds
+The current implementation produces a validated operation plan and evidence record only. It does not transmit attack traffic.
 
-## Phase 5 — Evidence
+## Phase 6 — Evidence
 
-Assessment artifacts are retained as machine-readable JSON/XML/TXT evidence.
+All assessment stages write structured evidence using collision-safe publication. Existing artifacts are never overwritten.
 
-## Phase 6 — Reporting
+## Phase 7 — Findings and reporting
 
-The collected evidence is converted into an assessment state suitable for technical review and portfolio presentation.
+Evidence is normalized into findings, summaries, dashboards, and future reproducible assessment packages.
 
 ## Important distinction
 
-Wireless visibility, network membership and authorization are separate concepts.
-
-Seeing an SSID or BSSID does not authorize connection, credential recovery, exploitation or access to devices on that network.
+Wireless visibility, network membership, capability, authorization, and execution are separate concepts. The framework keeps those boundaries explicit.
