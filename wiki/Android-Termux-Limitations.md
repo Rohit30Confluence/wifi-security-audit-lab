@@ -1,19 +1,28 @@
 # Android / Termux Limitations
 
-Real testing identified platform restrictions.
+Android exposes a restricted networking environment to unprivileged Termux processes. The assessment framework treats these restrictions as runtime conditions instead of assuming desktop-Linux privileges.
 
-## Observed
+## Observed constraints
 
-- termux-wifi-scaninfo provides Wi-Fi scan telemetry when Android permits it.
-- termux-wifi-connectioninfo provides current association information.
-- Direct ip route and ip neigh access can return Permission denied.
-- /proc/net/dev and /proc/net/route can be inaccessible.
-- Nmap can report no interfaces/routes when Android does not expose them.
+- `termux-wifi-scaninfo` provides Wi-Fi scan telemetry when Android permits it.
+- `termux-wifi-connectioninfo` provides association information.
+- Wi-Fi scanning may require Android Location services to be enabled.
+- `ip route`, `ip neigh`, and `/proc/net/*` can be inaccessible.
+- Nmap may report limited interfaces/routes when Android does not expose them.
+- Rootless Android should not be assumed to provide monitor mode or frame injection.
 
-The assessment therefore uses Termux:API where appropriate instead of assuming unrestricted Linux networking.
+## Design response
 
-A current test also returned:
+The project:
 
-API_ERROR: Location needs to be enabled on the device
+1. uses Termux:API for Android-specific telemetry;
+2. records unavailable data honestly;
+3. validates authorization before active assessment;
+4. detects wireless capabilities rather than assuming them;
+5. keeps wireless operation planning separate from packet transmission.
 
-This is an Android permission/state condition and should not be represented as a failed Wi-Fi scanner implementation.
+No synthetic live result is substituted when Android blocks telemetry.
+
+## NetHunter / external radio
+
+Monitor mode and injection are hardware/driver/kernel dependent. Full NetHunter or a compatible external USB radio may expose capabilities unavailable to stock/rootless Android, but the framework still requires explicit authorization and runtime capability validation.
