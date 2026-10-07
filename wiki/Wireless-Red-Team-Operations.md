@@ -13,3 +13,9 @@ packet_backend is intentionally NOT_IMPLEMENTED. A future authorized lab backend
 Rootless Android cannot be assumed to provide monitor mode or frame injection. The capability probe reports actual host-advertised capabilities.
 
 Test with: python -m pytest -v tests/test_wireless_capability.py tests/test_wireless_operations.py
+
+## Operation evidence lifecycle
+
+`record_operation_evidence()` persists each validated operation plan as collision-safe JSON. It records the authorization reference, exact SSID/BSSID/interface, requested operation, execution intent, backend state, and outcome. The evidence writer uses exclusive file creation so repeated or concurrent writes cannot overwrite prior evidence.
+
+The current branch intentionally stops at the validated operation/evidence boundary: `packet_backend` remains `NOT_IMPLEMENTED` and `transmission_performed` remains `false`. A future backend must consume this plan and independently enforce the same authorization and capability gates; it must not accept arbitrary nearby targets or bypass the scope validator.
