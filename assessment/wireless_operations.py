@@ -2,10 +2,12 @@
 """Fail-closed planning for authorized wireless red-team operations."""
 from __future__ import annotations
 import json, re
+from pathlib import Path
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
 from assessment.session import validate_scope
+from assessment.evidence import write_collision_safe
 
 _BSSID = re.compile(r"^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$", re.I)
 _ALLOWED = {"deauth", "handshake_capture", "frame_injection"}
@@ -52,6 +54,36 @@ def plan_operation(*, operation, ssid, bssid, authorization_ref, interface, capa
         },
     })
     return result
+
+def record_operation_evidence(plan, *, evidence_dir=None, outcome="PLANNED", details=None):
+    """Persist a collision-safe, non-transmitting operation audit record.
+
+    This records the validated plan and outcome only. It never invokes a packet
+    backend or transmits wireless traffic.
+    """
+    record = {
+        "assessment_id": f"WO-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "operation": plan["operation"],
+        "target": {
+            "ssid": plan["ssid"],
+            "bssid": plan["bssid"],
+            "interface": plan["interface"],
+        },
+        "authorization_ref": plan["authorization_ref"],
+        "status": outcome,
+        "execute_requested": bool(plan["execute"]),
+        "packet_backend": plan["packet_backend"],
+        "transmission_performed": False,
+        "details": details or {},
+    }
+    root = evidence_dir or (Path(__file__).resolve().parent.parent / "evidence")
+    output = Path(root) / f"{record['assessment_id']}_wireless_operation.json"
+    return write_collision_safe(
+        output,
+        json.dumps(record, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
 
 def main():
     print(json.dumps({"module":"wireless_operations","status":"planning_only",
