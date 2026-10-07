@@ -1,37 +1,40 @@
-# Wi-Fi Security Audit Lab
+# Wi-Fi Security Audit Lab — Wiki Home
 
-## LAB-001 — Real Device Assessment
+The project is an authorization-aware Wi-Fi assessment framework for controlled labs, defensive audits, and evidence-backed security testing.
 
-This project has progressed from test/demo reporting to real Android/Termux
-Wi-Fi discovery and authorized LAN inventory.
+## Current feature state
 
-### Real evidence demonstrated
+The project now includes:
 
-- 13 Wi-Fi access points observed in a real scan
-- SSID, BSSID, RSSI and frequency collection
-- Security capability and WPS advertisement reporting
-- Real authorized Wi-Fi association telemetry
-- Authorized LAN target: `172.22.25.0/24`
-- Device IP observed: `172.22.25.69`
-- Additional live host observed: `172.22.25.133`
-- TCP/53 reachable
-- `dnsmasq 2.51` identified on TCP/53
-- JSON/XML/TXT evidence artifacts
-- 110 automated tests passing
+- Passive Wi-Fi discovery and security classification
+- Explicit BSSID-bound authorization
+- Authorized LAN and TCP service assessment
+- Collision-safe evidence preservation
+- Guarded Hydra and John credential assessment engines
+- Wireless radio capability discovery
+- Fail-closed wireless operation planning
+- Operation evidence recording
+- Automated CI validation
 
-### Current Android state
+The completed credential/wireless feature branch currently reports **123 passing tests**.
 
-The latest check reports the device as disconnected and Termux:API currently
-returns `API_ERROR: Location needs to be enabled on the device` for Wi-Fi
-scanning. This is recorded as an Android platform condition, not replaced by
-synthetic data.
+## Security boundary
 
-### Documentation
+Discovery is observation, not authorization. Active operations must validate the explicit authorization scope before probes or subprocess execution.
+
+Wireless operation types may be represented as assessment plans, but the current implementation does not transmit deauthentication, handshake-capture, or frame-injection traffic. `packet_backend` remains `NOT_IMPLEMENTED`.
+
+## Documentation
 
 - [Architecture](Architecture.md)
-- [Wi-Fi Discovery](WiFi-Discovery.md)
-- [LAN Inventory](LAN-Inventory.md)
-- [Service Assessment](Service-Assessment.md)
+- [Methodology](Methodology.md)
+- [Credential & Wireless Engine](Credential-and-Wireless-Engine.md)
+- [Wireless Red-Team Operations](Wireless-Red-Team-Operations.md)
+- [Evidence & Wireless Sessions](Evidence-and-Wireless-Sessions.md)
 - [Evidence](Evidence.md)
-- [Android / Termux Limitations](Android-Termux-Limitations.md)
+- [Testing](Testing.md)
+- [Status](Status.md)
 - [Roadmap](Roadmap.md)
+- [Android / Termux Limitations](Android-Termux-Limitations.md)
+
+No synthetic result is presented as live evidence.
