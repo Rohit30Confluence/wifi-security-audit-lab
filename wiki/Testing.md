@@ -2,24 +2,42 @@
 
 ## Automated tests
 
-Run: `python -m pytest -v`
+Run:
 
-Current validated result: 110 passed
+```bash
+python -m pytest -v
+```
+
+Current validated feature-branch result: **123 passed**.
+
+The suite covers authorization, connectivity fail-closed behavior, discovery, evidence collision safety, credential auditing, wireless capability detection, wireless operation planning, reporting, and existing assessment behavior.
 
 ## Python compilation
 
-Run: `python -m compileall -q .`
+```bash
+python -m compileall -q .
+```
 
-Current result: PYTHON COMPILE: PASS
+Current result: PASS.
 
 ## Shell validation
 
-Run: `for f in *.sh; do bash -n "$f"; done`
+```bash
+for f in *.sh; do bash -n "$f"; done
+```
 
 All repository shell scripts pass syntax validation.
 
-## Real-device validation
+## Git hygiene
 
-The project has been exercised against real Android/Termux telemetry, Nmap LAN discovery, Nmap service identification, and Ncat TCP connectivity verification.
+```bash
+git diff --check
+```
 
-Automated tests and real-device evidence are kept separate.
+## CI
+
+GitHub Actions executes the automated suite on repository changes. Tests do not require physical wireless hardware or live packet transmission.
+
+## Safety test boundary
+
+Credential tests use mocks/dry-run behavior. Wireless operation tests verify authorization, capability gates, evidence, and the absence of transmission; they do not send deauthentication, handshake-capture, or frame-injection traffic.
