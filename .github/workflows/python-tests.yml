@@ -1,0 +1,23 @@
+name: Python tests
+
+on:
+  push:
+    branches:
+      - main
+      - feature/credential-and-wireless-assessment-engine
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install -U pytest
+      - name: Run test suite
+        run: python -m pytest -v
