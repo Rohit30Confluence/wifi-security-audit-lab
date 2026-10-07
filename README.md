@@ -1,8 +1,8 @@
 # Wi-Fi Security Assessment Lab
 
-A defensive, authorization-aware Wi-Fi assessment and audit framework designed for controlled security testing, passive discovery, and evidence-backed reporting.
+A defensive, authorization-aware Wi-Fi assessment and audit framework designed for controlled security testing, passive discovery, evidence-backed reporting, and guarded credential/wireless assessment workflows.
 
-Built for defensive security engineers, auditors, and students operating in controlled laboratory environments and mobile assessment scenarios (including Termux on Android).
+Built for defensive security engineers, auditors, red-team practitioners, and students operating in controlled laboratory environments and mobile assessment scenarios (including Termux on Android).
 
 ---
 
@@ -10,73 +10,76 @@ Built for defensive security engineers, auditors, and students operating in cont
 
 The Wi-Fi Security Assessment Lab demonstrates an evidence-based security auditing workflow:
 
-$$\text{Discover} \longrightarrow \text{Classify} \longrightarrow \text{Verify Authorization} \longrightarrow \text{Preserve Evidence} \longrightarrow \text{Report}$$
+```text
+Discover → Classify → Verify Authorization → Assess → Preserve Evidence → Report
+```
 
 ### Defensive Boundaries & Authorization Principle
-- **Passive Observation vs. Active Testing:** Observing an SSID or BSSID over the air is passive radio observation only. Passive discovery does not prove vulnerability and **never** constitutes authorization to probe, associate, authenticate, or transmit packets to a network.
-- **Fail-Closed Authorization:** Active network operations (LAN host scanning, gateway reachability, TCP service verification) require explicit, documented authorization. If authorization configuration is missing, malformed, empty, or mismatched, all active operations fail closed immediately.
-- **BSSID-Specific Scope Binding:** Authorization is strictly bound to the specific hardware BSSID (MAC address) of the access point. An SSID match alone is treated solely as a non-authorizing discovery hint (`SSID_HINT`) and **never** grants permission to probe a network. Mismatched or spoofed BSSIDs are rejected.
-- **Privacy & Responsible Disclosure:** No credential theft, password cracking, denial-of-service, or deauthentication attacks are implemented. Real private credentials and captured evidence are excluded from version control.
+
+- **Passive observation is not authorization:** Seeing an SSID/BSSID never authorizes probing, association, authentication, credential testing, or packet transmission.
+- **Fail-closed authorization:** Active operations require explicit documented authorization. Missing, empty, malformed, invalid, or mismatched authorization fails closed before active probes.
+- **BSSID-specific scope binding:** Authorization is bound to the target BSSID. An SSID match alone is only an `SSID_HINT` and never grants permission.
+- **Credential testing is guarded:** Hydra online audits and John offline audits validate scope first, use bounded execution, and default to dry-run behavior.
+- **Wireless operations are planning-only:** Deauthentication, handshake capture, and frame-injection workflows are represented as guarded operation plans. No unrestricted packet backend is included.
+- **Evidence is append-only/collision-safe:** Existing evidence is preserved; concurrent writes receive unique filenames.
+- **No real private credentials or private assessment evidence belong in version control.**
 
 ---
 
 ## Features & Capabilities
 
-- **Passive Wi-Fi Discovery:** Queries broadcast beacons via `termux-wifi-scaninfo` (Termux:API) without associating or transmitting active probes.
-- **Security Capability Classification:** Automatically classifies network security protocols (WPA3-SAE, WPA2-PSK, WPA, WEP, OPEN) and band/channel frequencies (2.4 GHz, 5 GHz).
-- **Append-Only Evidence Preservation:** Historical scan logs (`networks_log.csv` and `networks_log.json`) are cumulative and never truncated on repeated runs. Scans are indexed by unique `scan_id` tokens and timestamps. JSON writing uses atomic file replacement and automatic backup for corrupt logs.
-- **Strict Scope Verification:** Validates target scope against `authorized_networks.csv` (`ssid,bssid,authorization_ref,scope`). Disallowed/placeholder references (`none`, `default`, `test`, `authorized-lab`, `null`) are rejected.
-- **Authorized LAN Inventory:** Performs bounded, authorized ARP/ping host discovery and TCP port enumeration when explicitly connected to an authorized network.
-- **Interactive Security Dashboards:** Standalone web consoles (`index.html`, `assessment-report/index.html`, `assessment-report/live.html`) for reviewing findings, telemetry snapshots, and audit metrics.
-- **Automated Regression Testing:** Comprehensive unit and integration test suite (110 passing tests) with zero external hardware or network dependencies.
+- **Passive Wi-Fi Discovery:** Termux:API wireless observation without active probes.
+- **Security Classification:** WPA3-SAE, WPA2-PSK, WPA, WEP, and OPEN classification plus band/frequency information.
+- **Strict Scope Verification:** Explicit `authorized_networks.csv` validation with no fallback to the example authorization file.
+- **Authorized LAN Inventory:** Bounded host and TCP service discovery inside explicitly authorized scope.
+- **Credential Assessment Engine:** Guarded Hydra and John integrations with authorization checks, bounded concurrency/timeouts, and dry-run defaults.
+- **Wireless Capability Engine:** Detects wireless tools, interfaces, supported modes, and monitor-mode readiness without attack traffic.
+- **Wireless Operation Planner:** Explicit SSID/BSSID/interface targeting, authorization gates, capability gates, and collision-safe operation evidence.
+- **Evidence Preservation:** Collision-safe, non-overwriting JSON/TXT evidence records with atomic publication.
+- **Interactive Dashboards:** Static web consoles for assessment findings, telemetry, and audit metrics.
+- **Automated Regression Testing:** **123 tests passing** on the completed feature branch with no physical radio or live-network dependency in CI.
 
 ---
 
 ## Architecture & Repository Structure
 
 ```text
-├── .github/workflows/ci.yml       # GitHub Actions CI matrix workflow (Python 3.9 - 3.12)
-├── assessment/                    # Core Python assessment package
-│   ├── authorized_inventory.py   # Authorized network discovery & inventory
-│   ├── authorized_scan.py        # Host & service discovery runner
-│   ├── connectivity.py           # Association state & gateway ping checks
-│   ├── discovery.py              # Wireless frequency, band, and capability parsing
-│   ├── engine.py                 # Multi-phase assessment session runner
-│   ├── evidence.py               # Collision-safe evidence writing & JSON/TXT artifact storage
-│   ├── executive.py              # Summary generators for assessment reports
-│   ├── findings.py               # Security finding rules (e.g. NET-001, NET-002, NET-003)
-│   ├── live.py                   # Termux live telemetry parsers
-│   ├── live_assessment.py        # Live network validation and service assessment
-│   ├── live_inventory.py         # Live LAN discovery orchestration
-│   ├── phase6.py                 # Telemetry normalization for dashboard presentation
-│   ├── services.py               # TCP port & banner enumeration
-│   └── session.py                # Authorization scope validation & session lifecycle
-├── assessment-report/             # Static HTML assessment report dashboards
-│   ├── index.html                # Executive assessment report
-│   └── live.html                 # Live connection dashboard
-├── authorized_networks.example.csv# Example template for authorization configuration
-├── index.html                     # Primary interactive Termux-style web console
-├── public-data/                   # Sanitized benchmark evidence data
-│   └── phase6_snapshot.json      # Sample telemetry snapshot for demonstration
-├── requirements.txt               # Declared Python test dependencies (pytest)
-├── tests/                         # Automated test suite (110 tests)
-│   ├── conftest.py               # Pytest fixtures and isolated scope configuration
-│   ├── test_connectivity.py      # Connectivity & gateway validation tests
-│   ├── test_discovery.py         # Wireless band & security classification tests
-│   ├── test_engine.py            # Assessment engine session tests
-│   ├── test_evidence.py          # Evidence preservation & collision safety tests
-│   ├── test_findings.py          # Finding generation tests
-│   ├── test_security_fixes.py    # Fail-closed scope, mismatched BSSID, & injection tests
-│   ├── test_services.py          # Service target parsing & TCP probing tests
-│   ├── test_session.py           # Scope validation lifecycle tests
-│   └── test_wifi_scan.py         # Scanner append logging, CSV/JSON parity, & scope tests
-├── wifi_scan.py                   # CLI tool for passive Wi-Fi scanning & audit logging
-├── wifi_scan.sh                   # Wrapper script for passive scanning
-├── wifi-assess.sh                 # Wrapper script for live target assessment
-├── wifi-authorized-lan.sh         # Shell runner for authorized LAN discovery
-├── wifi-authorized.sh             # Shell runner for authorized inventory
-├── wifi-live.sh                   # Shell runner for live inventory
-└── wiki/                          # Documentation wiki (methodology, limitations, architecture)
+├── .github/workflows/python-tests.yml
+├── assessment/
+│   ├── authorized_inventory.py
+│   ├── authorized_scan.py
+│   ├── cli.py
+│   ├── connectivity.py
+│   ├── credential_audit.py       # Guarded Hydra/John credential auditing
+│   ├── discovery.py
+│   ├── engine.py
+│   ├── evidence.py               # Collision-safe evidence writer
+│   ├── executive.py
+│   ├── findings.py
+│   ├── live.py
+│   ├── live_assessment.py
+│   ├── live_inventory.py
+│   ├── phase6.py
+│   ├── presentation.py
+│   ├── report.py
+│   ├── runner.py
+│   ├── services.py
+│   ├── session.py                # Authorization/scope lifecycle
+│   ├── wireless_capability.py    # Radio capability discovery
+│   └── wireless_operations.py    # Guarded wireless operation planning
+├── assessment-report/
+├── authorized_networks.example.csv
+├── index.html
+├── public-data/
+├── requirements.txt
+├── tests/
+├── wifi_scan.py
+├── wifi_scan.sh
+├── wifi-assess.sh
+├── wifi-authorized-lan.sh
+├── wifi-authorized.sh
+├── wifi-live.sh
+└── wiki/
 ```
 
 ---
@@ -85,43 +88,22 @@ $$\text{Discover} \longrightarrow \text{Classify} \longrightarrow \text{Verify A
 
 | Environment | Supported Features | Prerequisites |
 | :--- | :--- | :--- |
-| **Android (Termux)** | Live passive Wi-Fi scans, LAN inventory, Nmap host discovery | Termux, Termux:API package & Android app, Location enabled, `nmap`, `jq`, `python` |
-| **Linux / macOS / Windows** | Development, offline assessment engine, test suite, dashboard, data parsing | Python 3.9+, standard POSIX tools (`bash`, `git`) |
-
----
-
-## Installation & Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Rohit30Confluence/wifi-security-audit-lab.git
-   cd wifi-security-audit-lab
-   ```
-
-2. **Create and activate an isolated virtual environment:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Install declared dependencies:**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
+| **Android / Termux** | Passive Wi-Fi discovery, authorized LAN inventory, capability discovery | Termux, Termux:API, Location enabled for Wi-Fi scans, Python, Nmap where available |
+| **Linux / macOS / Windows** | Development, offline assessment engines, tests, reporting, parsing | Python 3.9+, Git, Bash for shell checks |
+| **External Wi-Fi radio / NetHunter** | Runtime-dependent wireless capability discovery | Compatible adapter, driver/kernel support, explicit authorized lab scope |
 
 ---
 
 ## Authorization Configuration
 
-Before running any scans or assessments against a target network, create `authorized_networks.csv` in the project root:
+Create the real authorization file locally:
 
 ```bash
 cp authorized_networks.example.csv authorized_networks.csv
 ```
 
-### File Format (`authorized_networks.csv`)
-The authorization file **must** contain four columns with exact headers:
+The file must contain:
+
 ```csv
 ssid,bssid,authorization_ref,scope
 LAB-NET,02:00:00:00:00:01,AUTH-2026-LAB01,Controlled laboratory assessment
@@ -129,17 +111,18 @@ CORP-WIFI,02:00:00:00:00:02,AUTH-2026-CORP02,Authorized internal audit
 ```
 
 ### Scope Rules
-- **Specific BSSID Required:** `bssid` must match the MAC address of the target radio.
-- **SSID-Only Non-Authorizing Hint:** If an AP broadcasts a matching SSID but an unauthorized or different BSSID, it is classified as `SSID_HINT` and marked `authorized=False`.
-- **Disallowed Reference Protection:** Values like `default`, `test`, `none`, `null`, `undefined`, and `authorized-lab` are rejected.
-- **Fail Closed:** If `authorized_networks.csv` is missing or empty, all active operations fail closed. The tool **never** falls back to `authorized_networks.example.csv`.
+
+- `bssid` must match the target radio.
+- SSID-only matches are non-authorizing hints.
+- Placeholder references such as `default`, `test`, `none`, `null`, and `authorized-lab` are rejected.
+- Missing/empty/malformed authorization fails closed.
+- The tool never falls back to `authorized_networks.example.csv`.
 
 ---
 
 ## Usage
 
-### 1. Passive Wi-Fi Scan (Observation Only)
-Runs a passive scan via Termux:API, classifies observable networks, matches against recorded scope, and appends records to cumulative audit logs:
+### Passive Wi-Fi Scan
 
 ```bash
 python3 wifi_scan.py
@@ -147,111 +130,78 @@ python3 wifi_scan.py
 ./wifi_scan.sh
 ```
 
-**Output files generated:**
-- `networks_log.csv` (append-only cumulative CSV log)
-- `networks_log.json` (append-only cumulative JSON array with atomic replace)
+Observation only. No active network probing is implied.
 
-### 2. Live Target Assessment
-Evaluates association, gateway connectivity, and service reachability for an explicitly authorized target:
+### Live Target Assessment
 
 ```bash
 ./wifi-assess.sh --ssid 'LAB-NET' --authorization-ref 'AUTH-2026-LAB01'
 ```
 
-### 3. Authorized LAN Discovery
-Conducts bounded LAN host discovery on the currently connected subnet:
+### Authorized LAN Discovery
 
 ```bash
 ./wifi-authorized-lan.sh AUTH-2026-LAB01
 ```
 
-### 4. Interactive Dashboards
-Open `index.html` or `assessment-report/index.html` in any modern web browser or serve locally:
+### Guarded Credential Assessment
 
-```bash
-python3 -m http.server 8000
-# Open http://localhost:8000 in your browser
-```
+Credential engines require an authorization-validated target. Dry-run is the safe default; execution is bounded and must remain inside the documented assessment scope.
+
+The credential engine supports Hydra online checks for approved protocols and John offline password auditing. Real credentials and private hashes must remain outside version control.
+
+### Wireless Capability / Operation Planning
+
+The wireless capability layer reports actual host capabilities. Wireless operation planning requires explicit SSID, BSSID, interface, authorization reference, and capability validation.
+
+The current branch records plans/evidence only. `packet_backend` is `NOT_IMPLEMENTED` and operation evidence records `transmission_performed: false`.
 
 ---
 
 ## Automated Testing & Quality Gates
 
-The repository includes a complete automated test suite that executes locally without requiring live network interfaces, Termux APIs, or physical radios:
-
 ```bash
-# Run full pytest suite (110 tests)
 python3 -m pytest -v
-
-# Byte-compile all Python modules
 python3 -m compileall -q .
-
-# Validate shell script syntax
 for f in *.sh; do bash -n "$f"; done
-
-# Verify git diff formatting and whitespace
 git diff --check
 ```
+
+The completed feature branch currently verifies **123 passing tests**.
 
 ---
 
 ## CI/CD Pipeline
 
-Continuous integration is managed via GitHub Actions in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
-- **Triggers:** Pushes and pull requests to `main`.
-- **Matrix:** Python 3.9, 3.10, 3.11, and 3.12 on `ubuntu-latest`.
-- **Checks:** Dependency installation, full pytest suite (110 tests), bytecode compilation, shell syntax validation (`bash -n`), and git diff checks.
-- **Security:** Least-privilege `contents: read` permissions; no external secrets required.
+GitHub Actions runs the Python test workflow on pushes and pull requests. CI installs pytest, runs the complete suite, and keeps wireless/credential tests hardware-independent by using mocks and dry-run behavior.
 
----
-
-## Troubleshooting
-
-- **`Missing optional platform tool: 'termux-wifi-scaninfo'`**:
-  Occurs when running `wifi_scan.py` on non-Android or desktop systems. The CLI exits gracefully with code 1 and explanatory diagnostics. For testing on desktop, use the pytest test suite which mocks platform subprocess calls.
-- **`API_ERROR: Location needs to be enabled on the device`**:
-  Android requires Location services to be turned ON for apps to receive Wi-Fi scan results via Termux:API. Enable Location in Android Settings.
-- **`Authorization configuration error: authorized_networks.csv must contain: ...`**:
-  Ensure `authorized_networks.csv` has the exact header `ssid,bssid,authorization_ref,scope` with valid comma-separated values.
-- **`Permission denied on ip route / proc/net`**:
-  Modern Android restricts direct access to Linux routing tables from unprivileged app sandboxes. The assessment scripts detect this and record the condition honestly rather than reporting misleading data.
-
----
-
-## Responsible Security & Contributing
-
-- **Security Vulnerabilities:** If you discover a security issue or unexpected privilege escalation in this repository, please report it via private GitHub security advisory.
-- **Contributions:** Contributions that improve test coverage, documentation clarity, defensive telemetry parsing, or platform resilience are welcome. Please ensure all 110 tests pass and code compiles cleanly before submitting a pull request.
+No live wireless scans or packet-transmission tests are executed in CI.
 
 ---
 
 ## Documentation Wiki
 
-Detailed architectural documentation, platform boundary analysis, and testing guides are available in the [`wiki/`](wiki/Home.md) directory:
 - [Wiki Home](wiki/Home.md)
 - [Architecture](wiki/Architecture.md)
 - [Assessment Methodology](wiki/Methodology.md)
-- [Testing Guide](wiki/Testing.md)
+- [Testing](wiki/Testing.md)
+- [Status](wiki/Status.md)
+- [Roadmap](wiki/Roadmap.md)
+- [Credential & Wireless Engine](wiki/Credential-and-Wireless-Engine.md)
+- [Wireless Red-Team Operations](wiki/Wireless-Red-Team-Operations.md)
+- [Evidence & Wireless Sessions](wiki/Evidence-and-Wireless-Sessions.md)
 - [Android & Termux Limitations](wiki/Android-Termux-Limitations.md)
 - [LAN Inventory](wiki/LAN-Inventory.md)
-- [Evidence Handling](wiki/Evidence.md)
-- [Status & Validation](wiki/Status.md)
+- [Service Assessment](wiki/Service-Assessment.md)
+- [Wi-Fi Discovery](wiki/WiFi-Discovery.md)
+- [Evidence](wiki/Evidence.md)
 
+---
 
-## Credential & Wireless Assessment Engine
+## Current Feature-Branch State
 
-This branch adds guarded assessment infrastructure for authorized red-team work:
+The `feature/credential-and-wireless-assessment-engine` branch is complete and CI-verified at **123 tests passed**.
 
-- **Credential audits:** Hydra online checks and John offline hash audits, with authorization validation and dry-run defaults.
-- **Wireless capability discovery:** interface, driver/tooling, supported modes, and monitor-mode readiness without attack traffic.
-- **Wireless operation planning:** explicit SSID/BSSID/interface targeting, fail-closed authorization, capability gates, and no automatic target selection.
-- **Evidence lifecycle:** collision-safe, non-overwriting operation records suitable for concurrent assessment runs.
-- **CI:** the full Python test suite runs on pushes and pull requests.
+The next planned engineering stage is a unified orchestration/reporting layer that correlates authorization, capability discovery, connectivity, credential assessment, wireless operation planning, evidence, findings, and final reports into one auditable assessment workflow.
 
-### Wireless safety boundary
-
-The operation engine deliberately stops at an authorization-validated plan and evidence boundary. It does not implement unrestricted deauthentication, arbitrary handshake capture, or unrestricted frame injection. `packet_backend` remains `NOT_IMPLEMENTED` and operation evidence records `transmission_performed: false` until a future authorized backend is added with equivalent scope and capability enforcement.
-
-### Verified branch state
-
-GitHub Actions currently reports **123 tests passed** for this branch. No live wireless scans or packet-transmission tests are part of CI.
+The wireless safety boundary remains explicit: no unrestricted deauthentication, arbitrary handshake capture, or unrestricted frame injection backend is included.
