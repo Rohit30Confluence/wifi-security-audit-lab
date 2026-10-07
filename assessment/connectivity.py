@@ -193,61 +193,76 @@ def collect_connectivity_evidence(
 ):
     timestamp = datetime.now(timezone.utc).isoformat()
 
-    connection_info = get_termux_connection_info()
-    interface_info = get_interface_info(interface)
-    routes = get_routes()
-
-    gateway = gateway_from_routes(
-        routes.get("stdout", "")
-    )
-
-    if gateway is None:
-        gateway = gateway_from_connection_info(
-            connection_info
-        )
-
-    evidence = {
-        "assessment_id": assessment_id,
-        "timestamp": timestamp,
-        "target": {
-            "ssid": ssid,
-            "bssid": bssid,
-        },
-        "authorization_ref": authorization_ref,
-        "connection_state": connection_state(
-            connection_info
-        ),
-        "connection_info": connection_info,
-        "interface_info": interface_info,
-        "routes": routes,
-        "gateway": gateway,
-    }
-
     from assessment.session import validate_scope
     scope_valid, scope_reason = validate_scope(
         ssid=ssid,
         bssid=bssid,
         authorization_ref=authorization_ref,
     )
+
+    # Authorization is checked before any connectivity/interface probe.
+    # This keeps the evidence collector fail-closed for out-of-scope targets.
     if not scope_valid:
-        evidence["gateway_test"] = {
-            "target": gateway,
-            "reachable": False,
-            "status": "NOT_TESTED",
-            "reason": f"Authorization verification failed: {scope_reason}",
+        evidence = {
+            "assessment_id": assessment_id,
+            "timestamp": timestamp,
+            "target": {
+                "ssid": ssid,
+                "bssid": bssid,
+            },
+            "authorization_ref": authorization_ref,
+            "connection_state": "NOT_TESTED",
+            "connection_info": {
+                "available": False,
+                "reason": "Authorization verification failed",
+            },
+            "interface_info": {
+                "available": False,
+                "reason": "Authorization verification failed",
+            },
+            "routes": {
+                "available": False,
+                "reason": "Authorization verification failed",
+            },
+            "gateway": None,
+            "gateway_test": {
+                "target": None,
+                "reachable": False,
+                "status": "NOT_TESTED",
+                "reason": f"Authorization verification failed: {scope_reason}",
+            },
         }
     else:
-        evidence["gateway_test"] = check_gateway(gateway)
+        connection_info = get_termux_connection_info()
+        interface_info = get_interface_info(interface)
+        routes = get_routes()
+
+        gateway = gateway_from_routes(routes.get("stdout", ""))
+        if gateway is None:
+            gateway = gateway_from_connection_info(connection_info)
+
+        evidence = {
+            "assessment_id": assessment_id,
+            "timestamp": timestamp,
+            "target": {
+                "ssid": ssid,
+                "bssid": bssid,
+            },
+            "authorization_ref": authorization_ref,
+            "connection_state": connection_state(connection_info),
+            "connection_info": connection_info,
+            "interface_info": interface_info,
+            "routes": routes,
+            "gateway": gateway,
+            "gateway_test": check_gateway(gateway),
+        }
 
     EVIDENCE_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    output = (
-        EVIDENCE_DIR
-        / f"{assessment_id}_connectivity.json"
-    )
+    output = EVIDENCE_DIR / f"{assessment_id}_connectivity.json"
 
     from assessment.evidence import write_collision_safe
     write_collision_safe(
