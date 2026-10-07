@@ -236,3 +236,22 @@ Detailed architectural documentation, platform boundary analysis, and testing gu
 - [LAN Inventory](wiki/LAN-Inventory.md)
 - [Evidence Handling](wiki/Evidence.md)
 - [Status & Validation](wiki/Status.md)
+
+
+## Credential & Wireless Assessment Engine
+
+This branch adds guarded assessment infrastructure for authorized red-team work:
+
+- **Credential audits:** Hydra online checks and John offline hash audits, with authorization validation and dry-run defaults.
+- **Wireless capability discovery:** interface, driver/tooling, supported modes, and monitor-mode readiness without attack traffic.
+- **Wireless operation planning:** explicit SSID/BSSID/interface targeting, fail-closed authorization, capability gates, and no automatic target selection.
+- **Evidence lifecycle:** collision-safe, non-overwriting operation records suitable for concurrent assessment runs.
+- **CI:** the full Python test suite runs on pushes and pull requests.
+
+### Wireless safety boundary
+
+The operation engine deliberately stops at an authorization-validated plan and evidence boundary. It does not implement unrestricted deauthentication, arbitrary handshake capture, or unrestricted frame injection. `packet_backend` remains `NOT_IMPLEMENTED` and operation evidence records `transmission_performed: false` until a future authorized backend is added with equivalent scope and capability enforcement.
+
+### Verified branch state
+
+GitHub Actions currently reports **123 tests passed** for this branch. No live wireless scans or packet-transmission tests are part of CI.
