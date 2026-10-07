@@ -188,6 +188,29 @@ def test_probe_fail_closed_authorized_scan(monkeypatch):
     assert len(probes_run) == 0
 
 
+def test_connectivity_probe_helpers_fail_closed_on_missing_results(monkeypatch):
+    monkeypatch.setattr(conn_mod.shutil, "which", lambda command: "/usr/bin/ip")
+    monkeypatch.setattr(conn_mod, "run_command", lambda command: None)
+
+    interface = conn_mod.get_interface_info("wlan0")
+    routes = conn_mod.get_routes()
+
+    assert interface["available"] is False
+    assert "no result" in interface["reason"]
+    assert routes["available"] is False
+    assert "no result" in routes["reason"]
+
+
+def test_termux_connection_probe_fails_closed_on_missing_result(monkeypatch):
+    monkeypatch.setattr(conn_mod.shutil, "which", lambda command: "/usr/bin/termux-wifi-connectioninfo")
+    monkeypatch.setattr(conn_mod, "run_command", lambda command: None)
+
+    result = conn_mod.get_termux_connection_info()
+
+    assert result["available"] is False
+    assert "no result" in result["reason"]
+
+
 def test_probe_fail_closed_connectivity_evidence(monkeypatch, tmp_path):
     monkeypatch.setattr(conn_mod, "EVIDENCE_DIR", tmp_path)
     probes_run = []
